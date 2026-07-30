@@ -12,6 +12,8 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import coil.ImageLoader
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.ExistingWorkPolicy
 import coil.ImageLoaderFactory
 import com.unshoo.pixelmusic.data.preferences.UserPreferencesRepository
 import com.unshoo.pixelmusic.data.repository.ArtistImageRepository
@@ -73,6 +75,25 @@ class PixelMusicApplication : Application(), ImageLoaderFactory, Configuration.P
     private val appLifecycleObserver = object : DefaultLifecycleObserver {
         override fun onStart(owner: LifecycleOwner) {
             libraryStateHolder.get().restoreAfterTrimIfNeeded()
+            
+            // 1. Get the current day (Days since epoch)
+            val currentDay = java.lang.System.currentTimeMillis() / (1000 * 60 * 60 * 24)
+            
+            // 2. Access a simple SharedPreferences file just for updates
+            val prefs = getSharedPreferences("PixelMusicUpdatePrefs", Context.MODE_PRIVATE)
+            val lastCheckDay = prefs.getLong("last_check_day", 0)
+
+            // 3. If the app hasn't checked today, run it and save the new day
+            if (currentDay != lastCheckDay) {
+                prefs.edit().putLong("last_check_day", currentDay).apply()
+
+                val oneTimeCheck = OneTimeWorkRequestBuilder<UpdateWorker>().build()
+                WorkManager.getInstance(this@PixelMusicApplication).enqueueUniqueWork(
+                    "AppOpenUpdateCheck",
+                    ExistingWorkPolicy.REPLACE,
+                    oneTimeCheck
+                )
+            }
         }
     }
 
