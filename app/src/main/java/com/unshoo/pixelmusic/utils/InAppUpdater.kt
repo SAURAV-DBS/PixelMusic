@@ -68,51 +68,56 @@ object InAppUpdater {
     }
 
     fun downloadAndTrackProgress(context: Context, url: String, fileName: String): Flow<Float> = flow {
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val uri = Uri.parse(url)
-        
-        // Clean up old update files
-        val oldFile = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
-        if (oldFile.exists()) oldFile.delete()
+        try {
+            val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
+            if (file.exists()) file.delete()
 
-        val request = DownloadManager.Request(uri)
-            .setTitle("PixelMusic Update")
-            .setDescription("Downloading latest version")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, fileName)
-            .setAllowedOverMetered(true)
-            .setAllowedOverRoaming(true)
+            // 1. Start the download directly using OkHttp
+            val request = Request.Builder().url(url).build()
+            val response = client.newCall(request).execute()
 
-        val downloadId = downloadManager.enqueue(request)
-        var isDownloading = true
+            if (!response.isSuccessful) return@flow
 
-        while (isDownloading) {
-            val query = DownloadManager.Query().setFilterById(downloadId)
-            val cursor = downloadManager.query(query)
-            
-            if (cursor != null && cursor.moveToFirst()) {
-                val bytesDownloadedIndex = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
-                val bytesTotalIndex = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
-                val statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+            val body = response.body ?: return@flow
+            val totalBytes = body.contentLength()
+            val inputStream = body.byteStream()
+            val outputStream = java.io.FileOutputStream(file)
 
-                if (bytesDownloadedIndex != -1 && bytesTotalIndex != -1 && statusIndex != -1) {
-                    val bytesDownloaded = cursor.getInt(bytesDownloadedIndex)
-                    val bytesTotal = cursor.getInt(bytesTotalIndex)
-                    val status = cursor.getInt(statusIndex)
+            var bytesCopied = 0L
+            val buffer = ByteArray(8 * 1024)
+            var bytes = inputStream.read(buffer)
 
-                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        emit(1f)
-                        isDownloading = false
-                        promptInstall(context, fileName)
-                    } else if (status == DownloadManager.STATUS_FAILED) {
-                        isDownloading = false
-                    } else if (bytesTotal > 0) {
-                        emit(bytesDownloaded.toFloat() / bytesTotal.toFloat())
+            var lastEmitTime = System.currentTimeMillis()
+
+            // 2. Read the file stream and update the progress bar natively
+            while (bytes >= 0) {
+                outputStream.write(buffer, 0, bytes)
+                bytesCopied += bytes
+                
+                // Throttle UI updates to 10 times a second so the Compose animation doesn't lag
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastEmitTime > 100 || bytesCopied == totalBytes) {
+                    if (totalBytes > 0) {
+                        emit(bytesCopied.toFloat() / totalBytes.toFloat())
                     }
+                    lastEmitTime = currentTime
                 }
+                bytes = inputStream.read(buffer)
             }
-            cursor?.close()
-            delay(500) // Poll twice a second
+
+            outputStream.flush()
+            outputStream.close()
+            inputStream.close()
+            
+            emit(1f) // Ensure it visually hits 100%
+            
+            // 3. Launch the Android installer safely on the main thread
+            withContext(Dispatchers.Main) {
+                promptInstall(context, fileName)
+            }
+            
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }.flowOn(Dispatchers.IO)
 
