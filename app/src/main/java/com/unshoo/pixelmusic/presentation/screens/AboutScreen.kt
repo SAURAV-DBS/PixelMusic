@@ -478,7 +478,7 @@ private fun SocialLinksRow() {
                         maxLines = 1,
                     )
                     Text(
-                        text = "sauravbr/PixelMusic",
+                        text = "saurav-02/PixelMusic",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
                         maxLines = 1,
