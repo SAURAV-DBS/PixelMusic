@@ -31,6 +31,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
+import com.unshoo.pixelmusic.utils.UpdateWorker
 
 @HiltAndroidApp
 class PixelMusicApplication : Application(), ImageLoaderFactory, Configuration.Provider {
@@ -166,6 +173,21 @@ class PixelMusicApplication : Application(), ImageLoaderFactory, Configuration.P
             }
         }
     }
+
+        // Schedule the daily update checker
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val updateRequest = PeriodicWorkRequestBuilder<UpdateWorker>(1, TimeUnit.DAYS)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "PixelMusicUpdateCheck",
+            ExistingPeriodicWorkPolicy.KEEP,
+            updateRequest
+        )
 
     override fun newImageLoader(): ImageLoader {
         return imageLoader.get().newBuilder()
