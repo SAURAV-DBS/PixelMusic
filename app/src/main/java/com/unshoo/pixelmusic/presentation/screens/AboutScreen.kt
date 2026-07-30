@@ -16,6 +16,15 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
+import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -275,6 +284,16 @@ private fun AboutHeroCard(
 ) {
     val heroShape = AbsoluteSmoothCornerShape(30.dp, 60)
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Update State tracking
+    var updateState by remember { mutableStateOf<UpdateState>(UpdateState.Checking) }
+
+    // Check for updates when the screen loads
+    LaunchedEffect(Unit) {
+        updateState = InAppUpdater.checkForUpdate(versionName)
+    }
 
     Surface(
         modifier = modifier,
@@ -353,12 +372,85 @@ private fun AboutHeroCard(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
+                // The Expressive Material 3 Update Button
+                AnimatedContent(
+                    targetState = updateState,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                    }, label = "update_button_anim"
+                ) { state ->
+                    when (state) {
+                        is UpdateState.Checking -> {
+                            FilledTonalButton(
+                                onClick = { },
+                                enabled = false,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Checking for updates...")
+                            }
+                        }
+                        is UpdateState.UpToDate -> {
+                            FilledTonalButton(
+                                onClick = { },
+                                enabled = false,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Rounded.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("You are on the latest version")
+                            }
+                        }
+                        is UpdateState.Available -> {
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        updateState = UpdateState.Downloading(0f)
+                                        InAppUpdater.downloadAndTrackProgress(
+                                            context, 
+                                            state.downloadUrl, 
+                                            "PixelMusic_${state.versionName}.apk"
+                                        ).collectLatest { progress ->
+                                            updateState = UpdateState.Downloading(progress)
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Install Version ${state.versionName}")
+                            }
+                        }
+                        is UpdateState.Downloading -> {
+                            Button(
+                                onClick = { },
+                                enabled = false,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                CircularProgressIndicator(
+                                    progress = { state.progress },
+                                    modifier = Modifier.size(18.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                    trackColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Downloading... ${(state.progress * 100).toInt()}%")
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
                 CommunitySignalsRow()
-
                 Spacer(modifier = Modifier.height(12.dp))
-
                 SocialLinksRow()
             }
         }
