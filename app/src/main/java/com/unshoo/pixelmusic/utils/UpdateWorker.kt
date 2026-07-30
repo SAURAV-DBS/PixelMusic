@@ -1,4 +1,4 @@
-package com.unshoo.pixelmusic.data.worker
+package com.unshoo.pixelmusic.utils
 
 import android.Manifest
 import android.app.NotificationChannel
