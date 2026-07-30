@@ -172,7 +172,6 @@ class PixelMusicApplication : Application(), ImageLoaderFactory, Configuration.P
                 AlbumArtCacheManager.configuredCacheLimitMb = savedLimit.toLong()
             }
         }
-    }
 
         // Schedule the daily update checker
         val constraints = Constraints.Builder()
@@ -188,6 +187,7 @@ class PixelMusicApplication : Application(), ImageLoaderFactory, Configuration.P
             ExistingPeriodicWorkPolicy.KEEP,
             updateRequest
         )
+    }
 
     override fun newImageLoader(): ImageLoader {
         return imageLoader.get().newBuilder()
