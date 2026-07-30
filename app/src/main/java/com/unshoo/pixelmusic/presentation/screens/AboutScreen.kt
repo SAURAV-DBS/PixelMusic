@@ -115,6 +115,8 @@ import com.unshoo.pixelmusic.presentation.viewmodel.PlayerViewModel
 import kotlinx.coroutines.launch
 import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import kotlin.math.roundToInt
+import com.unshoo.pixelmusic.utils.InAppUpdater
+import com.unshoo.pixelmusic.utils.UpdateState
 
 // AboutTopBar removed, replaced by CollapsibleCommonTopBar
 
