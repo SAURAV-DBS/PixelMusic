@@ -1871,19 +1871,26 @@ class MusicService : MediaLibraryService() {
         val allowBackground = keepPlayingInBackground
 
         if (!allowBackground) {
+            // SETTING IS OFF: Stop the music and let Media3 kill the service
             stopPlaybackAndUnload(
                 reason = "task_removed_background_disabled"
             )
+            super.onTaskRemoved(rootIntent)
             return
         }
 
         if (player == null || !player.playWhenReady || player.mediaItemCount == 0 || player.playbackState == Player.STATE_ENDED) {
+            // NO MUSIC PLAYING: Stop the service to save battery
             stopPlaybackAndUnload(
                 reason = "task_removed_not_playing"
             )
+            super.onTaskRemoved(rootIntent)
             return
         }
-        super.onTaskRemoved(rootIntent)
+        
+        // SETTING IS ON AND MUSIC IS PLAYING: 
+        // Do NOT call super.onTaskRemoved(rootIntent). 
+        // Swallowing this call forces the Foreground Service to stay alive in the background.
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
