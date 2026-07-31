@@ -426,7 +426,7 @@ private fun AboutHeroCard(
                         }
                     }
 
-                    AnimatedContent(
+                    AnimatedContent<UpdateState>(
                         targetState = updateState,
                         transitionSpec = {
                             fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
@@ -492,29 +492,28 @@ private fun AboutHeroCard(
                                 val progressColor = MaterialTheme.colorScheme.primary
                                 val trackColor = MaterialTheme.colorScheme.secondaryContainer
 
-                                // Custom Progress Bar Button
+                                // Custom Progress Bar Button (DrawScope free)
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(40.dp) // Standard Material Button Height
                                         .clip(AbsoluteSmoothCornerShape(20.dp, 60))
-                                        .background(trackColor)
-                                        .androidx.compose.ui.draw.drawBehind {
-                                            drawRect(
-                                                color = progressColor,
-                                                size = androidx.compose.ui.geometry.Size(
-                                                    width = size.width * animatedProgress,
-                                                    height = size.height
-                                                )
-                                            )
-                                        },
+                                        .background(trackColor),
                                     contentAlignment = Alignment.Center
                                 ) {
+                                    // The animated progress fill
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth(fraction = animatedProgress.coerceIn(0.001f, 1f))
+                                            .background(progressColor)
+                                            .align(Alignment.CenterStart)
+                                    )
+
                                     Text(
                                         text = "Downloading... ${(state.progress * 100).toInt()}%",
                                         style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.SemiBold,
-                                        // Uses secondary text color for good contrast across the fill
                                         color = MaterialTheme.colorScheme.onSecondaryContainer 
                                     )
                                 }
