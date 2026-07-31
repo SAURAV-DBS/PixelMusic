@@ -376,75 +376,145 @@ private fun AboutHeroCard(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // The Expressive Material 3 Update Button
-                AnimatedContent(
-                    targetState = updateState,
-                    transitionSpec = {
-                        fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
-                    }, label = "update_button_anim"
-                ) { state ->
-                    when (state) {
-                        is UpdateState.Checking -> {
-                            FilledTonalButton(
-                                onClick = { },
-                                enabled = false,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(18.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                // The Expressive Material 3 Update Section
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .androidx.compose.animation.animateContentSize(
+                            animationSpec = spring(stiffness = Spring.StiffnessLow)
+                        )
+                ) {
+                    // Extract the changelog if it exists in the current state
+                    val currentChangelog = when (val state = updateState) {
+                        is UpdateState.Available -> state.changelog
+                        is UpdateState.Downloading -> state.changelog
+                        else -> null
+                    }
+
+                    // Dynamically expanding Changelog Card
+                    if (!currentChangelog.isNullOrBlank()) {
+                        Surface(
+                            shape = AbsoluteSmoothCornerShape(16.dp, 60),
+                            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.AutoAwesome, 
+                                        contentDescription = null, 
+                                        modifier = Modifier.size(16.dp), 
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = "What's New", 
+                                        style = MaterialTheme.typography.labelMedium, 
+                                        color = MaterialTheme.colorScheme.primary, 
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = currentChangelog,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                Spacer(Modifier.width(8.dp))
-                                Text("Checking for updates...")
                             }
                         }
-                        is UpdateState.UpToDate -> {
-                            FilledTonalButton(
-                                onClick = { },
-                                enabled = false,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Rounded.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("You are on the latest version")
+                    }
+
+                    AnimatedContent(
+                        targetState = updateState,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                        }, label = "update_button_anim"
+                    ) { state ->
+                        when (state) {
+                            is UpdateState.Checking -> {
+                                FilledTonalButton(
+                                    onClick = { },
+                                    enabled = false,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Checking for updates...")
+                                }
                             }
-                        }
-                        is UpdateState.Available -> {
-                            Button(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        updateState = UpdateState.Downloading(0f)
-                                        InAppUpdater.downloadAndTrackProgress(
-                                            context, 
-                                            state.downloadUrl, 
-                                            "PixelMusic_${state.versionName}.apk"
-                                        ).collectLatest { progress ->
-                                            updateState = UpdateState.Downloading(progress)
+                            is UpdateState.UpToDate -> {
+                                FilledTonalButton(
+                                    onClick = { },
+                                    enabled = false,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Rounded.CheckCircle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("You are on the latest version")
+                                }
+                            }
+                            is UpdateState.Available -> {
+                                Button(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            // Pass the changelog into the downloading state so it stays expanded
+                                            updateState = UpdateState.Downloading(0f, state.changelog)
+                                            InAppUpdater.downloadAndTrackProgress(
+                                                context, 
+                                                state.downloadUrl, 
+                                                "PixelMusic_${state.versionName}.apk"
+                                            ).collectLatest { progress ->
+                                                updateState = UpdateState.Downloading(progress, state.changelog)
+                                            }
                                         }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(8.dp))
-                                Text("Install Version ${state.versionName}")
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Install Version ${state.versionName}")
+                                }
                             }
-                        }
-                        is UpdateState.Downloading -> {
-                            Button(
-                                onClick = { },
-                                enabled = false,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                CircularProgressIndicator(
-                                    progress = { state.progress },
-                                    modifier = Modifier.size(18.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    trackColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)
+                            is UpdateState.Downloading -> {
+                                // Animate the progress value so the bar fills smoothly between updates
+                                val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
+                                    targetValue = state.progress,
+                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                    label = "progress_anim"
                                 )
-                                Spacer(Modifier.width(8.dp))
-                                Text("Downloading... ${(state.progress * 100).toInt()}%")
+                                
+                                val progressColor = MaterialTheme.colorScheme.primary
+                                val trackColor = MaterialTheme.colorScheme.secondaryContainer
+
+                                // Custom Progress Bar Button
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(40.dp) // Standard Material Button Height
+                                        .clip(AbsoluteSmoothCornerShape(20.dp, 60))
+                                        .background(trackColor)
+                                        .androidx.compose.ui.draw.drawBehind {
+                                            drawRect(
+                                                color = progressColor,
+                                                size = size.copy(width = size.width * animatedProgress)
+                                            )
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Downloading... ${(state.progress * 100).toInt()}%",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        // Uses secondary text color for good contrast across the fill
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer 
+                                    )
+                                }
                             }
                         }
                     }
