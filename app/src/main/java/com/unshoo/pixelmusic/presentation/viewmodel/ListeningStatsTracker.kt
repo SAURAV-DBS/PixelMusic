@@ -429,7 +429,10 @@ class ListeningStatsTracker @Inject constructor(
 
             val workName = "auto_cache_$youtubeId"
             val request = OneTimeWorkRequestBuilder<SongDownloadWorker>()
-                .setInputData(workDataOf(SongDownloadWorker.SONG_KEY to youtubeId))
+                .setInputData(workDataOf(
+                    SongDownloadWorker.SONG_KEY to youtubeId,
+                    "persist_publicly" to false
+                ))
                 .addTag("auto_cache")
                 .build()
             WorkManager.getInstance(context)
