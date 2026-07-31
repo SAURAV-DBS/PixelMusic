@@ -131,11 +131,16 @@ fun AboutScreen(
     onNavigationIconClick: () -> Unit,
 ) {
     val context = LocalContext.current
-    val versionName: String = try {
-        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        packageInfo.versionName ?: "N/A"
-    } catch (_: Exception) {
-        "N/A"
+    val packageInfo = try {
+        context.packageManager.getPackageInfo(context.packageName, 0)
+    } catch (_: Exception) { null }
+    
+    val versionName: String = packageInfo?.versionName ?: "N/A"
+    val versionCode: Long = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+        packageInfo?.longVersionCode ?: 0L
+    } else {
+        @Suppress("DEPRECATION")
+        packageInfo?.versionCode?.toLong() ?: 0L
     }
 
     val transitionState = remember { MutableTransitionState(false) }
@@ -245,6 +250,7 @@ fun AboutScreen(
             item(key = "hero_card") {
                 AboutHeroCard(
                     versionName = versionName,
+                    versionCode = versionCode,
                     onVersionLongPress = {
                         navController.navigateSafely(Screen.EasterEgg.route)
                     },
@@ -283,6 +289,7 @@ fun AboutScreen(
 @Composable
 private fun AboutHeroCard(
     versionName: String,
+    versionCode: Long,
     onVersionLongPress: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -368,7 +375,7 @@ private fun AboutHeroCard(
                         },
                 ) {
                     Text(
-                        text = stringResource(R.string.about_version_format, versionName),
+                        text = "${stringResource(R.string.about_version_format, versionName)} ($versionCode)",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
@@ -430,7 +437,9 @@ private fun AboutHeroCard(
                         targetState = updateState,
                         transitionSpec = {
                             fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
-                        }, label = "update_button_anim"
+                        },
+                        contentKey = { it::class }, // This prevents crossfading when progress updates!
+                        label = "update_button_anim"
                     ) { state ->
                         when (state) {
                             is UpdateState.Checking -> {
@@ -485,7 +494,11 @@ private fun AboutHeroCard(
                                 // Animate the progress value so the bar fills smoothly between updates
                                 val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
                                     targetValue = state.progress,
-                                    animationSpec = tween(500, easing = FastOutSlowInEasing),
+                                    // A spring animation handles rapid continuous updates perfectly for a fluid fill
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    ),
                                     label = "progress_anim"
                                 )
                                 
