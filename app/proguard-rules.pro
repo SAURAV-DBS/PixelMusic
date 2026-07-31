@@ -228,3 +228,10 @@
 
 # Keep desugared library classes (prevent R8 from stripping backported JDK APIs)
 -keep class j$.** { *; }
+
+# Protect MusicService and its lifecycle overrides from R8 minification
+-keep class com.unshoo.pixelmusic.data.service.MusicService { *; }
+
+# Protect the preferences repository so the background playback toggle state isn't obfuscated
+-keep class com.unshoo.pixelmusic.data.preferences.UserPreferencesRepository { *; }
+
