@@ -1871,26 +1871,22 @@ class MusicService : MediaLibraryService() {
         val allowBackground = keepPlayingInBackground
 
         if (!allowBackground) {
-            // SETTING IS OFF: Stop the music and let Media3 kill the service
+            // SETTING IS OFF: Manually stop the music
             stopPlaybackAndUnload(
                 reason = "task_removed_background_disabled"
             )
-            super.onTaskRemoved(rootIntent)
-            return
-        }
-
-        if (player == null || !player.playWhenReady || player.mediaItemCount == 0 || player.playbackState == Player.STATE_ENDED) {
-            // NO MUSIC PLAYING: Stop the service to save battery
+        } else if (player == null || !player.playWhenReady || player.mediaItemCount == 0 || player.playbackState == Player.STATE_ENDED) {
+            // NO MUSIC PLAYING: Manually stop to save battery
             stopPlaybackAndUnload(
                 reason = "task_removed_not_playing"
             )
-            super.onTaskRemoved(rootIntent)
-            return
         }
         
-        // SETTING IS ON AND MUSIC IS PLAYING: 
-        // Do NOT call super.onTaskRemoved(rootIntent). 
-        // Swallowing this call forces the Foreground Service to stay alive in the background.
+        // CRITICAL FIX: Always pass this to the superclass!
+        // If the music is paused/stopped, Media3 will kill the service.
+        // If the music is playing, Media3 intercepts this call and tells 
+        // Android to keep the Foreground Service alive in the background.
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
