@@ -43,7 +43,8 @@ object DownloadHelper {
     suspend fun downloadAudio(
         context: Context,
         song: Song,
-        connections: Int = 8
+        connections: Int = 8,
+        persistPublicly: Boolean = true
     ): String? = withContext(Dispatchers.IO) {
         
         val cacheDir = File(context.cacheDir, "PixelMusic_Temp")
@@ -107,6 +108,14 @@ object DownloadHelper {
         val safeArtist = song.artist.replace(Regex("[\\\\/:*?\"<>|]"), "_")
         // Changed to .m4a
         val finalFileName = "${safeTitle}_${safeArtist}_${System.currentTimeMillis()}.m4a"
+
+        if (!persistPublicly) {
+            val hiddenDir = File(context.filesDir, "hidden_cache").apply { mkdirs() }
+            val hiddenFile = File(hiddenDir, finalFileName)
+            tempOutputFile.copyTo(hiddenFile, overwrite = true)
+            tempOutputFile.delete()
+            return@withContext hiddenFile.absolutePath
+        }
 
         val publicUriString = writeToPublicMediaStore(context, tempOutputFile, finalFileName)
         
