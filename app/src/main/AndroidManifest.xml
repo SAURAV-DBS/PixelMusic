@@ -282,14 +282,6 @@
         </receiver>
 
         <service
-    android:name=".data.service.MusicService"
-    android:stopWithTask="false"
-    android:foregroundServiceType="mediaPlayback"
-    android:exported="true">
-    <!-- your intent filters -->
-        </service>
-
-        <service
             android:name=".data.service.http.MediaFileHttpServerService"
             android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
