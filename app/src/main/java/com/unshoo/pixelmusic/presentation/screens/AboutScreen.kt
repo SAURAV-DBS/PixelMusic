@@ -502,7 +502,10 @@ private fun AboutHeroCard(
                                         .androidx.compose.ui.draw.drawBehind {
                                             drawRect(
                                                 color = progressColor,
-                                                size = size.copy(width = size.width * animatedProgress)
+                                                size = androidx.compose.ui.geometry.Size(
+                                                    width = size.width * animatedProgress,
+                                                    height = size.height
+                                                )
                                             )
                                         },
                                     contentAlignment = Alignment.Center
