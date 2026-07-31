@@ -20,7 +20,8 @@ import java.io.File
 
 data class GithubRelease(
     @SerializedName("tag_name") val tagName: String,
-    @SerializedName("assets") val assets: List<GithubAsset>
+    @SerializedName("assets") val assets: List<GithubAsset>,
+    @SerializedName("body") val body: String?
 )
 
 data class GithubAsset(
@@ -31,8 +32,15 @@ data class GithubAsset(
 sealed class UpdateState {
     object Checking : UpdateState()
     object UpToDate : UpdateState()
-    data class Available(val versionName: String, val downloadUrl: String) : UpdateState()
-    data class Downloading(val progress: Float) : UpdateState()
+    data class Available(
+        val versionName: String, 
+        val downloadUrl: String,
+        val changelog: String? = null
+    ) : UpdateState()
+    data class Downloading(
+        val progress: Float,
+        val changelog: String? = null
+    ) : UpdateState()
 }
 
 object InAppUpdater {
@@ -56,7 +64,11 @@ object InAppUpdater {
                 if (cleanLatest != cleanCurrent && release.assets.isNotEmpty()) {
                     val apkAsset = release.assets.firstOrNull { it.name.endsWith(".apk") }
                     if (apkAsset != null) {
-                        return@withContext UpdateState.Available(release.tagName, apkAsset.downloadUrl)
+                        return@withContext UpdateState.Available(
+                            versionName = release.tagName, 
+                            downloadUrl = apkAsset.downloadUrl,
+                            changelog = release.body
+                        )
                     }
                 }
             }
