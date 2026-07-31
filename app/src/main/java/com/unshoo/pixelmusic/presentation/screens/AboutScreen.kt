@@ -4,6 +4,8 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -380,9 +382,7 @@ private fun AboutHeroCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .androidx.compose.animation.animateContentSize(
-                            animationSpec = spring(stiffness = Spring.StiffnessLow)
-                        )
+                        .animateContentSize()
                 ) {
                     // Extract the changelog if it exists in the current state
                     val currentChangelog = when (val state = updateState) {
