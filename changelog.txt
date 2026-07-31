@@ -1,4 +1,2 @@
 New features:
-1. Added AOD mod
-2. Improved playback UI
-3. Fixed crash on Android 14
+1. Fixed Background playback 
