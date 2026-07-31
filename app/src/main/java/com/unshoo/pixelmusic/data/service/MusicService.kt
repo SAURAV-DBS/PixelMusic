@@ -1878,14 +1878,19 @@ class MusicService : MediaLibraryService() {
     override fun onTaskRemoved(rootIntent: Intent?) {
         val player = mediaSession?.player
         val allowBackground = keepPlayingInBackground
-        val isActuallyPlaying = player?.isPlaying == true
+        
+        // UNIVERSAL FIX: Check playWhenReady instead of isPlaying!
+        // This ensures the app doesn't kill itself if swiped away while buffering or crossfading.
+        val isIntentionalPlayback = player?.playWhenReady == true && 
+                                    player.playbackState != Player.STATE_IDLE && 
+                                    player.playbackState != Player.STATE_ENDED
 
-        if (!allowBackground || !isActuallyPlaying) {
-            // If settings forbid backgrounding or audio is idle, execute teardown
+        if (!allowBackground || !isIntentionalPlayback) {
+            // Player is genuinely paused, empty, or user disabled background play: shut it down universally.
             stopPlaybackAndUnload(
                 reason = if (!allowBackground) "task_removed_background_disabled" else "task_removed_not_playing"
             )
-            // Let Media3 clean up since we actually want to stop
+            // Only let Media3 clean up if we are actually stopping
             super.onTaskRemoved(rootIntent)
         } else {
             // ARCHIVETUNE STRATEGY 🚀
@@ -1893,8 +1898,8 @@ class MusicService : MediaLibraryService() {
             schedulePlaybackSnapshotPersist(immediate = true)
             
             // 2. Do NOTHING else. By swallowing super.onTaskRemoved, we prevent Media3
-            // from voluntarily killing the service, and the WakeLock keeps the CPU alive.
-            Timber.tag(TAG).d("onTaskRemoved bypassed to keep playing in background.")
+            // from voluntarily killing the service.
+            Timber.tag(TAG).d("onTaskRemoved bypassed universally to keep playing in background.")
         }
     }
 
