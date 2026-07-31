@@ -416,6 +416,9 @@ class MusicService : MediaLibraryService() {
 
         engine.masterPlayer.addListener(playerListener)
 
+        // ArchiveTune Strategy: Force a PARTIAL_WAKE_LOCK so Funtouch OS doesn't sleep the CPU on swipe
+        (engine.masterPlayer as? androidx.media3.exoplayer.ExoPlayer)?.setWakeMode(C.WAKE_MODE_LOCAL)
+
         // Handle player swaps (crossfade) to keep MediaSession in sync
         engine.addPlayerSwapListener(playerSwapListener)
         engine.addTransitionDisplayPlayerListener(transitionDisplayPlayerListener)
@@ -1882,11 +1885,17 @@ class MusicService : MediaLibraryService() {
             stopPlaybackAndUnload(
                 reason = if (!allowBackground) "task_removed_background_disabled" else "task_removed_not_playing"
             )
+            // Let Media3 clean up since we actually want to stop
+            super.onTaskRemoved(rootIntent)
+        } else {
+            // ARCHIVETUNE STRATEGY 🚀
+            // 1. Safety measure: Immediately save the queue and position to disk
+            schedulePlaybackSnapshotPersist(immediate = true)
+            
+            // 2. Do NOTHING else. By swallowing super.onTaskRemoved, we prevent Media3
+            // from voluntarily killing the service, and the WakeLock keeps the CPU alive.
+            Timber.tag(TAG).d("onTaskRemoved bypassed to keep playing in background.")
         }
-        
-        // Always pass to the superclass to allow Media3 to manage the foreground
-        // service state internally. Swallowing this call causes fatal OS desynchronization.
-        super.onTaskRemoved(rootIntent)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
