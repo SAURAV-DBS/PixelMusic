@@ -44,6 +44,7 @@ class SongDownloadWorker(
         return withContext(Dispatchers.IO) {
             val playlistId = params.inputData.getString(PLAYLIST_KEY)
             val songId = params.inputData.getString(SONG_KEY)
+            val persistPublicly = params.inputData.getBoolean("
                 ?: return@withContext Result.failure()
 
             var song = localSongRepository.getSong(songId)
@@ -89,7 +90,7 @@ class SongDownloadWorker(
 
                 val audioPath =
                     DownloadHelper.downloadAudio(
-                        appContext, song,
+                        appContext, song, connections = 8, persistPublicly = persistPublicly
                     )
                 val thumbnailPath =
                     DownloadHelper.downloadImage(
@@ -119,7 +120,9 @@ class SongDownloadWorker(
                     musicDao.updateSongFilePathAndParent(mainId, audioPath, parentDir)
                 }
 
-                UmihiNotificationManager.showSongDownloadSuccess(appContext, song)
+                if (persistPublicly) {
+                    UmihiNotificationManager.showSongDownloadSuccess(appContext, song)
+                }
                 Result.success()
             } catch (_: CancellationException) {
                 UmihiHelper.printd("Song download canceled ${song.title}")
