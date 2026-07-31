@@ -1872,27 +1872,22 @@ class MusicService : MediaLibraryService() {
         castSessionManager = null
     }
 
-override fun onTaskRemoved(rootIntent: Intent?) {
+    override fun onTaskRemoved(rootIntent: Intent?) {
         val player = mediaSession?.player
         val allowBackground = keepPlayingInBackground
         val isActuallyPlaying = player?.isPlaying == true
 
         if (!allowBackground || !isActuallyPlaying) {
-            // Setting is off, or nothing is really playing: stop and let
-            // Media3's own onTaskRemoved (which has the same "stop" outcome
-            // in this branch) clean things up.
+            // If settings forbid backgrounding or audio is idle, execute teardown
             stopPlaybackAndUnload(
                 reason = if (!allowBackground) "task_removed_background_disabled" else "task_removed_not_playing"
             )
-            super.onTaskRemoved(rootIntent)
         }
-        // else: music is genuinely playing and background playback is allowed.
-        // Do NOT call super here — MediaSessionService's default onTaskRemoved
-        // re-checks isPlaybackOngoing() && isAnySessionPlaying() independently
-        // and can kill the service even when we want it to survive. The
-        // foreground service itself survives task removal on its own; we just
-        // need to not let Media3 stop it out from under us.
-}
+        
+        // Always pass to the superclass to allow Media3 to manage the foreground
+        // service state internally. Swallowing this call causes fatal OS desynchronization.
+        super.onTaskRemoved(rootIntent)
+    }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
 
