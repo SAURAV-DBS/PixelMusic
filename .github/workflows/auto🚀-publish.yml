@@ -1,4 +1,4 @@
-name: Android Release Build
+name: Android Autorelease Build 🚀
 
 on:
   workflow_dispatch: # Allows you to manually trigger a release build
