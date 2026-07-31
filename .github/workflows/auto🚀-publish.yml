@@ -46,7 +46,11 @@ jobs:
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           else
-            echo "TAG_NAME=v1.0.${{ github.run_number }}" >> $GITHUB_ENV
+            # Extract APP_VERSION_NAME from gradle.properties and remove any trailing whitespace/carriage returns
+            VERSION_NAME=$(grep "^APP_VERSION_NAME=" gradle.properties | cut -d'=' -f2 | tr -d '\r' | tr -d ' ')
+            
+            # Create a tag like v2.3.91
+            echo "TAG_NAME=v${VERSION_NAME}.${{ github.run_number }}" >> $GITHUB_ENV
           fi
 
       - name: Create GitHub Release & Upload APK
@@ -65,3 +69,4 @@ jobs:
           name: app-release-signed
           path: app/build/outputs/apk/release/*.apk
           retention-days: 14
+          
