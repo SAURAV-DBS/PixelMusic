@@ -1872,28 +1872,27 @@ class MusicService : MediaLibraryService() {
         castSessionManager = null
     }
 
-    override fun onTaskRemoved(rootIntent: Intent?) {
+override fun onTaskRemoved(rootIntent: Intent?) {
         val player = mediaSession?.player
         val allowBackground = keepPlayingInBackground
+        val isActuallyPlaying = player?.isPlaying == true
 
-        if (!allowBackground) {
-            // SETTING IS OFF: Manually stop the music
+        if (!allowBackground || !isActuallyPlaying) {
+            // Setting is off, or nothing is really playing: stop and let
+            // Media3's own onTaskRemoved (which has the same "stop" outcome
+            // in this branch) clean things up.
             stopPlaybackAndUnload(
-                reason = "task_removed_background_disabled"
+                reason = if (!allowBackground) "task_removed_background_disabled" else "task_removed_not_playing"
             )
-        } else if (player == null || !player.playWhenReady || player.mediaItemCount == 0 || player.playbackState == Player.STATE_ENDED) {
-            // NO MUSIC PLAYING: Manually stop to save battery
-            stopPlaybackAndUnload(
-                reason = "task_removed_not_playing"
-            )
+            super.onTaskRemoved(rootIntent)
         }
-        
-        // CRITICAL FIX: Always pass this to the superclass!
-        // If the music is paused/stopped, Media3 will kill the service.
-        // If the music is playing, Media3 intercepts this call and tells 
-        // Android to keep the Foreground Service alive in the background.
-        super.onTaskRemoved(rootIntent)
-    }
+        // else: music is genuinely playing and background playback is allowed.
+        // Do NOT call super here — MediaSessionService's default onTaskRemoved
+        // re-checks isPlaybackOngoing() && isAnySessionPlaying() independently
+        // and can kill the service even when we want it to survive. The
+        // foreground service itself survives task removal on its own; we just
+        // need to not let Media3 stop it out from under us.
+}
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
 
