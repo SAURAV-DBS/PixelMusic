@@ -1879,28 +1879,24 @@ class MusicService : MediaLibraryService() {
         val player = mediaSession?.player
         val allowBackground = keepPlayingInBackground
         
-        // UNIVERSAL FIX: Check playWhenReady instead of isPlaying!
-        // This ensures the app doesn't kill itself if swiped away while buffering or crossfading.
+        // Universal check for intent to play
         val isIntentionalPlayback = player?.playWhenReady == true && 
                                     player.playbackState != Player.STATE_IDLE && 
                                     player.playbackState != Player.STATE_ENDED
 
         if (!allowBackground || !isIntentionalPlayback) {
-            // Player is genuinely paused, empty, or user disabled background play: shut it down universally.
+            // Player is genuinely paused, empty, or user disabled background play: shut it down.
             stopPlaybackAndUnload(
                 reason = if (!allowBackground) "task_removed_background_disabled" else "task_removed_not_playing"
             )
-            // Only let Media3 clean up if we are actually stopping
-            super.onTaskRemoved(rootIntent)
         } else {
-            // ARCHIVETUNE STRATEGY 🚀
-            // 1. Safety measure: Immediately save the queue and position to disk
+            // Safety measure: Immediately save the queue and position to disk
             schedulePlaybackSnapshotPersist(immediate = true)
-            
-            // 2. Do NOTHING else. By swallowing super.onTaskRemoved, we prevent Media3
-            // from voluntarily killing the service.
-            Timber.tag(TAG).d("onTaskRemoved bypassed universally to keep playing in background.")
         }
+        
+        // CRITICAL FIX: We MUST unconditionally pass this to the superclass. 
+        // Swallowing this call causes fatal OS desynchronization with Media3.
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? = mediaSession
