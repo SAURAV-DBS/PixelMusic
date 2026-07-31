@@ -368,12 +368,18 @@ class MusicService : MediaLibraryService() {
     }
 
     override fun onCreate() {
+        // --- CRITICAL LIFECYCLE FIX ---
+        // Self-start the service to decouple it from MainActivity's bound lifecycle.
+        // This guarantees the OS won't instantly destroy it when the app is swiped from recents.
+        try {
+            startService(Intent(this, MusicService::class.java))
+        } catch (e: Exception) {
+            Timber.tag(TAG).w(e, "Failed to self-start service")
+        }
+
         // Media3's Cast SDK callback path (MediaSessionImpl$$ExternalSyntheticLambda →
         // Util.postOrRun → MediaNotificationManager.updateNotificationInternal) calls
         // Service.startForeground() directly, bypassing onUpdateNotification() entirely.
-        // Since startForeground() is final we cannot override it. Instead we intercept
-        // ForegroundServiceStartNotAllowedException on the main thread before it reaches
-        // ActivityThread and crashes the process.
         val existingHandler = Thread.currentThread().uncaughtExceptionHandler
         previousMainThreadExceptionHandler = existingHandler
         Thread.currentThread().setUncaughtExceptionHandler { thread, throwable ->
