@@ -931,6 +931,7 @@ fun SettingsCategoryScreen(
                         }
                         SettingsCategory.PLAYBACK -> {
                             SettingsSubsection(title = stringResource(R.string.setcat_background_playback)) {
+                                /*
                                 ThemeSelectorItem(
                                     label = stringResource(R.string.setcat_keep_playing_label),
                                     description = stringResource(R.string.setcat_keep_playing_desc),
@@ -939,6 +940,7 @@ fun SettingsCategoryScreen(
                                     onSelectionChanged = { settingsViewModel.setKeepPlayingInBackground(it.toBoolean()) },
                                     leadingIcon = { Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.secondary) }
                                 )
+                                */
                                 SwitchSettingItem(
                                     title = "AOD Screen",
                                     subtitle = "Long-press the album art in Now Playing for a glowing, AMOLED-friendly ambient view. Tap anywhere to exit.",
@@ -1082,6 +1084,8 @@ fun SettingsCategoryScreen(
                                     checked = uiState.preferTelegramAlternative,
                                     onCheckedChange = { settingsViewModel.setPreferTelegramAlternative(it) },
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_all_inclusive_24), null, tint = MaterialTheme.colorScheme.secondary) }
+                                    
+                                /*
                                 )
                                 SwitchSettingItem(
                                     title = stringResource(R.string.setcat_preload_queue_enabled_title),
@@ -1090,6 +1094,8 @@ fun SettingsCategoryScreen(
                                     onCheckedChange = { settingsViewModel.setPreloadQueueEnabled(it) },
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_queue_music_24), null, tint = MaterialTheme.colorScheme.secondary) }
                                 )
+                                */
+                                
                                 AnimatedVisibility(
                                     visible = uiState.preloadQueueEnabled,
                                     enter = expandVertically() + fadeIn(),
