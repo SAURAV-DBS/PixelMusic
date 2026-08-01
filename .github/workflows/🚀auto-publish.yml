@@ -82,6 +82,18 @@ jobs:
           echo -e "\n\n---\n*Current Version Code: ${{ env.NEW_CODE }}*" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      - name: Delete Previous Releases and Tags
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Fetch the latest 100 release tags and delete them along with their git tags
+          gh release list --limit 100 --json tagName -q ".[].tagName" | while read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Wiping out old release and tag: $tag"
+              gh release delete "$tag" --cleanup-tag -y
+            fi
+          done
+
       - name: Create GitHub Release & Upload APK
         uses: softprops/action-gh-release@v2
         with:
