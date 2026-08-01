@@ -1078,15 +1078,17 @@ fun SettingsCategoryScreen(
                                     onCheckedChange = { settingsViewModel.setAvoidRepetitiveSongs(it) },
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_shuffle_24), null, tint = MaterialTheme.colorScheme.secondary) }
                                 )
+                                
+                                /* 
                                 SwitchSettingItem(
                                     title = stringResource(R.string.setcat_prefer_telegram_alternative_title),
                                     subtitle = stringResource(R.string.setcat_prefer_telegram_alternative_desc),
                                     checked = uiState.preferTelegramAlternative,
                                     onCheckedChange = { settingsViewModel.setPreferTelegramAlternative(it) },
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_all_inclusive_24), null, tint = MaterialTheme.colorScheme.secondary) }
-                                    
-                                /*
                                 )
+                                */
+                                
                                 SwitchSettingItem(
                                     title = stringResource(R.string.setcat_preload_queue_enabled_title),
                                     subtitle = stringResource(R.string.setcat_preload_queue_enabled_desc),
@@ -1094,7 +1096,6 @@ fun SettingsCategoryScreen(
                                     onCheckedChange = { settingsViewModel.setPreloadQueueEnabled(it) },
                                     leadingIcon = { Icon(painterResource(R.drawable.rounded_queue_music_24), null, tint = MaterialTheme.colorScheme.secondary) }
                                 )
-                                */
                                 
                                 AnimatedVisibility(
                                     visible = uiState.preloadQueueEnabled,
