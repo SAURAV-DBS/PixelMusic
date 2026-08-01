@@ -62,7 +62,9 @@ object InAppUpdater {
                 val cleanCurrent = currentVersion.replace(Regex("[^0-9.]"), "")
                 
                 if (cleanLatest != cleanCurrent && release.assets.isNotEmpty()) {
-                    val apkAsset = release.assets.firstOrNull { it.name.endsWith(".apk") }
+                    val apkAssets = release.assets.filter { it.name.endsWith(".apk") }
+                    val apkAsset = selectBestApkForDevice(apkAssets)
+                    
                     if (apkAsset != null) {
                         return@withContext UpdateState.Available(
                             versionName = release.tagName, 
@@ -146,5 +148,27 @@ object InAppUpdater {
             context.startActivity(intent)
         }
     }
-}
 
+    private fun selectBestApkForDevice(assets: List<GithubAsset>): GithubAsset? {
+        if (assets.isEmpty()) return null
+        if (assets.size == 1) return assets.first() 
+
+        val deviceAbis = android.os.Build.SUPPORTED_ABIS.map { it.lowercase() }
+
+        for (abi in deviceAbis) {
+            val abiMatch = when {
+                abi.contains("arm64") -> assets.firstOrNull { it.name.contains("arm64", ignoreCase = true) || it.name.contains("v8a", ignoreCase = true) }
+                abi.contains("v7") -> assets.firstOrNull { it.name.contains("armv7", ignoreCase = true) || it.name.contains("v7a", ignoreCase = true) }
+                abi.contains("x86_64") -> assets.firstOrNull { it.name.contains("x86_64", ignoreCase = true) }
+                abi.contains("x86") -> assets.firstOrNull { it.name.contains("x86", ignoreCase = true) }
+                else -> null
+            }
+            if (abiMatch != null) return abiMatch
+        }
+
+        val universalMatch = assets.firstOrNull { it.name.contains("universal", ignoreCase = true) }
+        if (universalMatch != null) return universalMatch
+
+        return assets.first()
+    }
+}
