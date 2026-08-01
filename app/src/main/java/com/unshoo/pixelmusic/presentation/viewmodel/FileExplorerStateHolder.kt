@@ -143,16 +143,19 @@ class FileExplorerStateHolder(
         }
             .mapLatest { (rawEntries, allowed, blocked) ->
                 val resolver = DirectoryRuleResolver(allowed, blocked)
-                rawEntries.map { raw ->
-                    DirectoryEntry(
-                        file = raw.file,
-                        directAudioCount = raw.directAudioCount,
-                        totalAudioCount = raw.totalAudioCount,
-                        canonicalPath = raw.canonicalPath,
-                        displayName = raw.displayName,
-                        isBlocked = resolver.isBlocked(raw.canonicalPath)
-                    )
-                }
+                rawEntries
+                    // NEW: Filter out any directory that doesn't contain audio files
+                    .filter { raw -> raw.totalAudioCount > 0 || raw.totalAudioCount == UNKNOWN_AUDIO_COUNT }
+                    .map { raw ->
+                        DirectoryEntry(
+                            file = raw.file,
+                            directAudioCount = raw.directAudioCount,
+                            totalAudioCount = raw.totalAudioCount,
+                            canonicalPath = raw.canonicalPath,
+                            displayName = raw.displayName,
+                            isBlocked = resolver.isBlocked(raw.canonicalPath)
+                        )
+                    }
             }
             .flowOn(mapperDispatcher)
             .onEach {
