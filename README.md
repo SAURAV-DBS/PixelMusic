@@ -2,7 +2,8 @@
 
 Listen up to all **1600+ of you degenerates** currently using this app. I am about to take this repository **PRIVATE** and disappear from the public internet like my motivation on a Monday morning. 🥷💨
 
-(And yes, I know the original license holder or those 5 specific people who DMed me crying to delete this repository—are probably watching this right now like-      👁️👄👁️. Hi there! We're taking this underground. 💀😂)
+And yes, I know the original license holder or those 5 specific people who DMed me crying to delete this repository—are probably watching this right now like  
+👁️👄👁️. Hi there! We're taking this underground. 💀😂)
 
 If you are currently using PixelMusic, you need to download the latest release **IMMEDIATELY**. 
 
@@ -17,5 +18,5 @@ This latest update has the new secret sauce baked directly into the code so your
 1. Go to the **Releases** tab.
 2. Download the latest version.
 3. Install it.
-**clean installation required**
+*clean installation required*
 Do it now before the bridge collapses. Don't say I didn't warn you. See you on the dark side! ✌️🚀
