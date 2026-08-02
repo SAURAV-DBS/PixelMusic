@@ -15,7 +15,7 @@ Will I manually DM the new APK to all 1600+ of you when you inevitably complain 
 ### 🛠️ The Fix
 This latest update has the new secret sauce baked directly into the code so your app can actually survive and keep finding updates after I lock the doors and throw away the key. 
 
-clean installation required
+# 🛑 clean installation required , uninstall the old version first
 
 1. Go to the **Releases** tab.
 2. Download the latest version.
