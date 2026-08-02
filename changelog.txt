@@ -1,7 +1,3 @@
-Release Highlights ✨
-
-Abi splits are now enabled 🚀
-Supported architectures: Arm64v8a, Armv7a, Universal (Android 9+)
 
 New Features:
 1. Smart Folder Filtering: The "Excluded folders" list (in both initial setup and settings) now automatically hides directories that don't contain any music. 🧾📁
