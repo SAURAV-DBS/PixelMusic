@@ -2,7 +2,7 @@
 
 Listen up to all **1600+ of you degenerates** currently using this app. I am about to take this repository **PRIVATE** and disappear from the public internet like my motivation on a Monday morning. 🥷💨
 
-(And yes, I know the original license holder or those 5 specific people who DMed me crying to delete this repository—are probably watching this right now like-  👁️👄👁️. Hi there! We're taking this underground. 💀😂)
+(And yes, I know the original license holder or those 5 specific people who DMed me crying to delete this repository—are probably watching this right now like-      👁️👄👁️. Hi there! We're taking this underground. 💀😂)
 
 If you are currently using PixelMusic, you need to download the latest release **IMMEDIATELY**. 
 
