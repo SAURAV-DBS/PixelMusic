@@ -86,8 +86,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Fetch the latest 100 release tags and delete them along with their git tags
-          gh release list --limit 100 --json tagName -q ".[].tagName" | while read -r tag; do
+          # Fetch the latest 100 release tags, filter OUT the current tag, and delete the rest
+          gh release list --limit 100 --json tagName -q ".[].tagName" | grep -v "^${{ env.TAG_NAME }}$" | while read -r tag; do
             if [ -n "$tag" ]; then
               echo "Wiping out old release and tag: $tag"
               gh release delete "$tag" --cleanup-tag -y
