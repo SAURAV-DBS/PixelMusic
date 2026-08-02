@@ -235,3 +235,10 @@
 # Protect the preferences repository so the background playback toggle state isn't obfuscated
 -keep class com.unshoo.pixelmusic.data.preferences.UserPreferencesRepository { *; }
 
+-keep class org.mozilla.javascript.** { *; }
+-dontwarn org.mozilla.javascript.**
+-keep class org.schabi.newpipe.extractor.** { *; }
+-dontwarn org.schabi.newpipe.extractor.**
+-keep class com.unshoo.pixelmusic.data.model.** { *; }
+-keep class com.unshoo.pixelmusic.data.backup.model.** { *; }
+
